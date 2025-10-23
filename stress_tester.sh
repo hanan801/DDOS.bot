@@ -1,16 +1,19 @@
 #!/bin/bash
 
 # Skrip Uji Beban Agresif untuk Termux
-# Menggunakan variabel lingkungan untuk konfigurasi.
+# URL target ditentukan di baris perintah.
 
 # Fungsi Utiliti
 
 # Validasi target
 validasi_target() {
-  if [ -z "$TARGET_URL" ]; then
-    echo "ERROR: URL target tidak ditentukan. Variabel TARGET_URL harus disetel di lingkungan."
+  # Periksa apakah URL target diberikan sebagai argumen
+  if [ -z "$1" ]; then
+    echo "ERROR: URL target tidak diberikan. Gunakan: ./uji_beban.sh <https://script.google.com/macros/s/AKfycbwszrUZfa6fPvNWsQF1xZTNjechnQ8_3W30GHPz8Yw57Y39UEuUX_N9OlaB8HyRTcr4/exec>"
     exit 1
   fi
+
+  TARGET_URL="$1" # Tetapkan URL target dari argumen baris perintah
 
   if [ -z "$ALLOWED_DOMAINS" ]; then
     ALLOWED_DOMAINS=$(echo "$TARGET_URL" | awk -F'//' '{print $2}' | awk -F'/' '{print $1}')
@@ -156,18 +159,20 @@ chmod +x uji_beban_worker.sh
 
 # Fungsi utama untuk memulai pengujian
 utama() {
-  penafian
-  validasi_target
-  konfirmasi_eksekusi
-
-  echo "Memulai pengujian beban pada $TARGET_URL dengan $NUM_THREADS thread selama $DURATION detik..."
-  echo "Hasil akan dicatat di $LOG_FILE"
+  # Ambil URL target dari argumen baris perintah
+  validasi_target "$1"
 
   # Inisialisasi variabel global (wajib di sini, karena export tidak berfungsi ke subproses)
   TOTAL_REQUESTS=0
   SUCCESSFUL_REQUESTS=0
   FAILED_REQUESTS=0
   START_TIME=$(date +%s)
+
+  penafian
+  konfirmasi_eksekusi
+
+  echo "Memulai pengujian beban pada $TARGET_URL dengan $NUM_THREADS thread selama $DURATION detik..."
+  echo "Hasil akan dicatat di $LOG_FILE"
 
   # Mulai pemantauan di latar belakang
   pantau_statistik &
@@ -184,4 +189,4 @@ utama() {
 }
 
 # Mulai skrip
-utama
+utama "$1" # Teruskan argumen ke fungsi utama
