@@ -1,31 +1,14 @@
 #!/bin/bash
 
-# Skrip Uji Beban Agresif untuk Termux (HANYA untuk situs web milik Anda)
-# Skrip ini dirancang untuk menguji kapasitas server Anda dengan performa maksimum,
-# namun dengan cara yang aman dan legal. Gunakan dengan tanggung jawab dan hanya di lingkungan yang diizinkan.
-
-# Definisi
-TARGET_URL=""       # Masukkan URL situs web Anda (contoh: https://situsanda.com)
-NUM_THREADS=50      # Jumlah thread/proses bersamaan
-REQUEST_TIMEOUT=10  # Timeout dalam detik untuk setiap permintaan
-DURATION=60         # Durasi pengujian dalam detik
-RATE_LIMIT=0        # Batas permintaan per detik (0 untuk menonaktifkan)
-LOG_FILE="uji_beban.log" # File log untuk hasil
-ALLOWED_DOMAINS=""  # Domain yang diizinkan (dipisahkan dengan koma, contoh: situsanda.com,domainlain.com)
-                       # Jika kosong, diasumsikan domain dari TARGET_URL
-
-# Variabel Global
-TOTAL_REQUESTS=0
-SUCCESSFUL_REQUESTS=0
-FAILED_REQUESTS=0
-START_TIME=$(date +%s)
+# Skrip Uji Beban Agresif untuk Termux
+# Menggunakan variabel lingkungan untuk konfigurasi.
 
 # Fungsi Utiliti
 
 # Validasi target
 validasi_target() {
   if [ -z "$TARGET_URL" ]; then
-    echo "ERROR: URL target tidak ditentukan. Tetapkan TARGET_URL."
+    echo "ERROR: URL target tidak ditentukan. Variabel TARGET_URL harus disetel di lingkungan."
     exit 1
   fi
 
@@ -81,7 +64,7 @@ lakukan_permintaan() {
        -H "User-Agent: $user_agent" \
        -H "Connection: keep-alive" \
        -X "$method" \
-       --max-time $REQUEST_TIMEOUT \
+       --max-time "$REQUEST_TIMEOUT" \
        "$url" 2>&1 | while read -r line; do
     local status_code=$(echo "$line" | awk '{print $1}')
     local response_time=$(echo "$line" | awk '{print $2}')
@@ -164,8 +147,8 @@ cat > uji_beban_worker.sh <<EOF
 
 while true; do
   lakukan_permintaan
-  if [ "$RATE_LIMIT" -gt 0 ]; then
-    sleep 1/$RATE_LIMIT  # Batasi laju permintaan
+  if [ "\$RATE_LIMIT" -gt 0 ]; then
+    sleep 1/\$RATE_LIMIT  # Batasi laju permintaan
   fi
 done
 EOF
@@ -180,6 +163,12 @@ utama() {
   echo "Memulai pengujian beban pada $TARGET_URL dengan $NUM_THREADS thread selama $DURATION detik..."
   echo "Hasil akan dicatat di $LOG_FILE"
 
+  # Inisialisasi variabel global (wajib di sini, karena export tidak berfungsi ke subproses)
+  TOTAL_REQUESTS=0
+  SUCCESSFUL_REQUESTS=0
+  FAILED_REQUESTS=0
+  START_TIME=$(date +%s)
+
   # Mulai pemantauan di latar belakang
   pantau_statistik &
 
@@ -188,7 +177,7 @@ utama() {
     ./uji_beban_worker.sh &
   done
 
-  wait  # Tunggu hingga semua proses anak selesai (pantau_statistik dan worker)
+  wait  # Tunggu hingga semua proses anak selesai
 
   echo "Pengujian beban selesai."
   echo "Hasil terperinci ada di $LOG_FILE"
