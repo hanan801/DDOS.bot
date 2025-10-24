@@ -1,12 +1,20 @@
-cat > package.json << 'EOF'
 {
-  "name": "h4000audio-ddos",
+  "name": "h4000audio-ddos-attack",
   "version": "2.2.2",
-  "description": "H4000Audio Premium DDoS Panel",
+  "description": "H4000Audio Premium DDoS Framework",
   "main": "panel.js",
   "scripts": {
-    "start": "node panel.js"
+    "start": "node panel.js",
+    "install-deps": "npm install"
   },
+  "keywords": [
+    "ddos",
+    "pentesting",
+    "security",
+    "h4000audio"
+  ],
+  "author": "h4000audio",
+  "license": "MIT",
   "dependencies": {
     "axios": "^1.6.0",
     "chalk": "^4.1.2",
@@ -14,7 +22,11 @@ cat > package.json << 'EOF'
     "gradient-string": "^2.0.2",
     "cli-spinner": "^0.2.10",
     "cli-table3": "^0.6.3",
-    "open": "^8.4.2"
+    "open": "^8.4.2",
+    "node-fetch": "^3.3.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hanan801/DDOS.bot"
   }
 }
-EOF
