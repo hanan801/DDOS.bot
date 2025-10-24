@@ -1,5 +1,4 @@
-# Buat file package.json
-cat > package.json << EOF
+cat > package.json << 'EOF'
 {
   "name": "h4000audio-ddos",
   "version": "2.2.2",
