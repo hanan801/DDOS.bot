@@ -1,0 +1,21 @@
+# Buat file package.json
+cat > package.json << EOF
+{
+  "name": "h4000audio-ddos",
+  "version": "2.2.2",
+  "description": "H4000Audio Premium DDoS Panel",
+  "main": "panel.js",
+  "scripts": {
+    "start": "node panel.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "chalk": "^4.1.2",
+    "figlet": "^1.6.0",
+    "gradient-string": "^2.0.2",
+    "cli-spinner": "^0.2.10",
+    "cli-table3": "^0.6.3",
+    "open": "^8.4.2"
+  }
+}
+EOF
